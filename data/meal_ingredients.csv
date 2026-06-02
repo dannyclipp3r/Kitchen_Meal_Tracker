@@ -1,0 +1,33 @@
+﻿meal_id,ingredient,quantity,unit
+1,rice,2,cup
+1,chicken breast,1,lb
+1,gochujang sauce,0.25,cup
+1,broccoli,1,cup
+2,chicken breast,1,lb
+2,pasta,2,cup
+2,broccoli,2,cup
+2,olive oil,0.5,cup
+3,ground beef,1,lb
+3,rice,2,cup
+3,soy sauce,0.25,cup
+3,green onion,0.5,cup
+4,chicken breast,1,lb
+4,rice,2,cup
+4,lettuce,2,cup
+4,sauce,0.25,cup
+5,ground chicken,1,lb
+5,tortillas,4,each
+5,cheese,1,cup
+5,salsa,0.5,cup
+6,chicken breast,1,lb
+6,couscous,2,cup
+6,cucumber,1,cup
+6,feta,0.5,cup
+7,pork tenderloin,1,lb
+7,potatoes,2,cup
+7,green beans,1,cup
+7,olive oil,0.25,cup
+8,ground beef,1,lb
+8,rice,2,cup
+8,bell peppers,2,each
+8,tomato sauce,1,cup
