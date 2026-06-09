@@ -1,8 +1,22 @@
-﻿day,meal_id
-Sunday,1
-Monday,2
-Tuesday,3
-Wednesday,4
-Thursday,5
-Friday,6
-Saturday,7
+﻿day,meal_type,meal_name,meal_id
+Monday,Breakfast,Breakfast Sandwich,11
+Monday,Lunch,Turkey Wraps,10
+Monday,Dinner,Gochujang Chicken Bowl,1
+Tuesday,Breakfast,Scrambled Eggs and Spinach,12
+Tuesday,Lunch,Turkey Wraps,10
+Tuesday,Dinner,Chicken Stir Fry,2
+Wednesday,Breakfast,Breakfast Sandwich,11
+Wednesday,Lunch,Turkey Wraps,10
+Wednesday,Dinner,Beef Bulgogi Bowl,3
+Thursday,Breakfast,Scrambled Eggs and Spinach,12
+Thursday,Lunch,Turkey Wraps,10
+Thursday,Dinner,Chicken Alfredo Bake,4
+Friday,Breakfast,Breakfast Sandwich,11
+Friday,Lunch,Turkey Wraps,10
+Friday,Dinner,Ground Chicken & Spinach Pasta,5
+Saturday,Breakfast,Scrambled Eggs and Spinach,12
+Saturday,Lunch,Turkey Wraps,10
+Saturday,Dinner,Mediterranean Bowl,6
+Sunday,Breakfast,Breakfast Sandwich,11
+Sunday,Lunch,Turkey Wraps,10
+Sunday,Dinner,Pork Tenderloin & Potato Wedges,7
