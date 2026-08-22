@@ -1,22 +1,22 @@
 ﻿day,meal_type,meal_name,meal_id
-Monday,Breakfast,Breakfast Sandwich,11
+Monday,Breakfast,Scrambled Eggs and Spinach,12
 Monday,Lunch,Turkey Wraps,10
-Monday,Dinner,Gochujang Chicken Bowl,1
-Tuesday,Breakfast,Scrambled Eggs and Spinach,12
+Monday,Dinner,Steak and Sweet Potatoes,9
+Tuesday,Breakfast,Breakfast Sandwich,11
 Tuesday,Lunch,Turkey Wraps,10
-Tuesday,Dinner,Chicken Stir Fry,2
-Wednesday,Breakfast,Breakfast Sandwich,11
+Tuesday,Dinner,Chicken Alfredo Bake,4
+Wednesday,Breakfast,Scrambled Eggs and Spinach,12
 Wednesday,Lunch,Turkey Wraps,10
-Wednesday,Dinner,Beef Bulgogi Bowl,3
-Thursday,Breakfast,Scrambled Eggs and Spinach,12
+Wednesday,Dinner,Chicken Stir Fry,2
+Thursday,Breakfast,Breakfast Sandwich,11
 Thursday,Lunch,Turkey Wraps,10
-Thursday,Dinner,Chicken Alfredo Bake,4
-Friday,Breakfast,Breakfast Sandwich,11
+Thursday,Dinner,Ground Chicken & Spinach Pasta,5
+Friday,Breakfast,Scrambled Eggs and Spinach,12
 Friday,Lunch,Turkey Wraps,10
-Friday,Dinner,Ground Chicken & Spinach Pasta,5
-Saturday,Breakfast,Scrambled Eggs and Spinach,12
+Friday,Dinner,Mediterranean Bowl,6
+Saturday,Breakfast,Breakfast Sandwich,11
 Saturday,Lunch,Turkey Wraps,10
-Saturday,Dinner,Mediterranean Bowl,6
-Sunday,Breakfast,Breakfast Sandwich,11
+Saturday,Dinner,Gochujang Chicken Bowl,1
+Sunday,Breakfast,Scrambled Eggs and Spinach,12
 Sunday,Lunch,Turkey Wraps,10
-Sunday,Dinner,Pork Tenderloin & Potato Wedges,7
+Sunday,Dinner,Beef Bulgogi Bowl,3

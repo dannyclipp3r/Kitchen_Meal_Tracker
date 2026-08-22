@@ -1,4 +1,5 @@
-﻿from itertools import cycle
+﻿from random import shuffle
+from itertools import cycle
 from src.storage import read_csv, write_csv
 
 COLUMNS = ["day", "meal_type", "meal_name", "meal_id"]
@@ -43,18 +44,28 @@ def build_meal_plan(meals, days=None, meal_types=None):
     if not available_meals:
         raise ValueError("Meals must include meal_id and meal_name values.")
 
-    all_meals = cycle(available_meals)
-    meals_by_type = {
-        meal_type: cycle([meal for meal in available_meals if meal["meal_type"] == meal_type])
-        for meal_type in meal_types
-        if any(meal["meal_type"] == meal_type for meal in available_meals)
-    }
+    meals_by_type = {}
+
+    for meal_type in meal_types:
+        matching = [
+            meal for meal in available_meals
+            if meal["meal_type"] == meal_type
+        ]
+
+        if matching:
+            shuffle(matching)
+            meals_by_type[meal_type] = cycle(matching)
 
     plan = []
+
     for day in days:
         for meal_type in meal_types:
-            meal_source = meals_by_type.get(meal_type, all_meals)
-            meal = next(meal_source)
+
+            if meal_type not in meals_by_type:
+                continue
+
+            meal = next(meals_by_type[meal_type])
+
             plan.append(
                 {
                     "day": day,

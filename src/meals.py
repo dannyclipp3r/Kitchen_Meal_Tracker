@@ -26,8 +26,19 @@ def _next_meal_id(meals):
     return str(max(meal_ids) + 1)
 
 
+def _format_name(value):
+    words = value.strip().split()
+    formatted_words = []
+    for word in words:
+        if len(word) <= 2:
+            formatted_words.append(word.upper())
+        else:
+            formatted_words.append(word[0].upper() + word[1:].lower())
+    return " ".join(formatted_words)
+
+
 def add_meal(meal_name, meal_type=DEFAULT_MEAL_TYPE):
-    meal_name = meal_name.strip()
+    meal_name = _format_name(meal_name)
     meal_type = meal_type.strip()
 
     if not meal_name:
@@ -52,7 +63,7 @@ def add_meal(meal_name, meal_type=DEFAULT_MEAL_TYPE):
 
 def add_ingredient_to_meal(meal_id, ingredient, quantity, unit):
     meal_id = str(meal_id).strip()
-    ingredient = ingredient.strip()
+    ingredient = _format_name(ingredient)
     quantity = str(quantity).strip()
     unit = unit.strip()
 
@@ -108,7 +119,7 @@ def update_meal_type(meal_id, meal_type):
 
 def _validate_ingredient_fields(meal_id, ingredient, quantity, unit):
     meal_id = str(meal_id).strip()
-    ingredient = ingredient.strip()
+    ingredient = _format_name(ingredient)
     quantity = str(quantity).strip()
     unit = unit.strip()
 
@@ -168,3 +179,40 @@ def remove_meal_ingredient(meal_id, row_index):
     removed = meal_ingredients.pop(target_index)
     write_csv(meal_ingredients, "meal_ingredients.csv", INGREDIENT_COLUMNS)
     return removed
+
+def delete_meal(meal_id):
+    meal_id = str(meal_id).strip()
+
+    if not meal_id:
+        raise ValueError("Meal is required.")
+
+    meals = load_meals()
+
+    removed_meal = None
+    remaining_meals = []
+
+    for meal in meals:
+        if meal["meal_id"] == meal_id:
+            removed_meal = meal
+        else:
+            remaining_meals.append(meal)
+
+    if removed_meal is None:
+        raise ValueError("Selected meal does not exist.")
+
+    write_csv(remaining_meals, "meals.csv", MEAL_COLUMNS)
+
+    meal_ingredients = load_meal_ingredients()
+
+    remaining_ingredients = [
+        row for row in meal_ingredients
+        if row["meal_id"] != meal_id
+    ]
+
+    write_csv(
+        remaining_ingredients,
+        "meal_ingredients.csv",
+        INGREDIENT_COLUMNS
+    )
+
+    return removed_meal

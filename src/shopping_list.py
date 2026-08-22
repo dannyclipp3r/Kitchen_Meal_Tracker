@@ -8,12 +8,8 @@ def _number(value):
     return float(value or 0)
 
 
-def build_shopping_list(inventory, meals, meal_ingredients, weekly_plan):
+def build_shopping_list(meal_ingredients, weekly_plan):
     planned_meal_ids = [row["meal_id"] for row in weekly_plan]
-    inventory_by_item = {
-        (row["ingredient"], row["unit"]): _number(row["quantity"])
-        for row in inventory
-    }
 
     needed_by_item = defaultdict(float)
     for meal_id in planned_meal_ids:
@@ -24,8 +20,8 @@ def build_shopping_list(inventory, meals, meal_ingredients, weekly_plan):
 
     shopping_list = []
     for (ingredient, unit), needed_quantity in needed_by_item.items():
-        available_quantity = inventory_by_item.get((ingredient, unit), 0)
-        quantity = needed_quantity - available_quantity
+        quantity = needed_quantity
+
         if quantity > 0:
             shopping_list.append({
                 "ingredient": ingredient,

@@ -3,7 +3,6 @@ from tkinter import messagebox, ttk
 
 import customtkinter as ctk
 
-from src.inventory import load_inventory
 from src.meals import (
     MEAL_TYPES,
     add_ingredient_to_meal,
@@ -12,9 +11,11 @@ from src.meals import (
     load_meals,
     remove_meal_ingredient,
     update_meal_ingredient,
+    delete_meal,
 )
 from src.planner import build_meal_plan, load_weekly_plan, save_weekly_plan
 from src.shopping_list import build_shopping_list, save_shopping_list
+from src.email_service import send_shopping_list_email
 
 
 class KitchenMealTrackerApp(ctk.CTk):
@@ -25,8 +26,8 @@ class KitchenMealTrackerApp(ctk.CTk):
         ctk.set_default_color_theme("blue")
 
         self.title("Kitchen Meal Tracker")
-        self.geometry("820x560")
-        self.minsize(720, 480)
+        self.geometry("840x480")
+        self.resizable(False, False)
 
         self.configure_grid()
         self.configure_tree_style()
@@ -78,7 +79,7 @@ class KitchenMealTrackerApp(ctk.CTk):
         ctk.CTkLabel(menu, text="Menu", font=ctk.CTkFont(size=18, weight="bold")).pack(padx=28, pady=(24, 14))
         ctk.CTkButton(menu, text="Add Meal", width=260, command=self.show_add_meal).pack(pady=7)
         ctk.CTkButton(menu, text="Check Meals", width=260, command=self.check_meals).pack(pady=7)
-        ctk.CTkButton(menu, text="Generate Meal Plan", width=260, command=self.generate_meal_plan).pack(pady=7)
+        ctk.CTkButton(menu, text="Weekly Meal Plan", width=260, command=self.generate_meal_plan).pack(pady=7)
         ctk.CTkButton(menu, text="Generate Shopping List", width=260, command=self.generate_shopping_list).pack(pady=(7, 24))
         self.set_status("Menu")
 
@@ -109,7 +110,7 @@ class KitchenMealTrackerApp(ctk.CTk):
         meal_name.focus()
 
         ctk.CTkLabel(form, text="Meal Type", anchor="w").grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 4))
-        meal_type = ctk.CTkComboBox(form, values=MEAL_TYPES, state="readonly")
+        meal_type = ctk.CTkOptionMenu(form, values=MEAL_TYPES)
         meal_type.grid(row=3, column=0, sticky="ew", padx=16, pady=(0, 16))
         meal_type.set("Dinner")
 
@@ -214,7 +215,7 @@ class KitchenMealTrackerApp(ctk.CTk):
         def stop_drag(event):
             start = getattr(table, "_drag_start", None)
             table.configure(cursor="")
-            if start and abs(event.x - start["x"]) < 6 and abs(event.y - start["y"]) < 6:
+            if start and abs(event.x - start["x"]) < 12 and abs(event.y - start["y"]) < 12:
                 row_id = table.identify_row(event.y)
                 column_id = table.identify_column(event.x)
                 if row_id and on_cell_open:
@@ -304,7 +305,7 @@ class KitchenMealTrackerApp(ctk.CTk):
             show_horizontal=False,
         )
 
-        editor = ctk.CTkFrame(page)
+        editor = ctk.CTkScrollableFrame(page)
         editor.grid(row=1, column=1, sticky="nsew", pady=(12, 0))
         editor.grid_columnconfigure(0, weight=1)
 
@@ -380,10 +381,27 @@ class KitchenMealTrackerApp(ctk.CTk):
             except Exception as error:
                 messagebox.showerror("Error", str(error))
 
+        def delete_current_meal():
+            confirm = messagebox.askyesno(
+                "Delete Meal",
+                f"Are you sure you want to delete '{meal_name}'?"
+            )
+
+            if not confirm:
+                return
+
+            try:
+                removed = delete_meal(meal_id)
+                self.set_status(f"Deleted meal: {removed['meal_name']}")
+                (previous_command or self.show_menu)()
+
+            except Exception as error:
+                messagebox.showerror("Error", str(error))
+
         ctk.CTkButton(editor, text="Add New Ingredient", height=42, command=add_new).grid(row=8, column=0, sticky="ew", padx=14, pady=(0, 8))
         ctk.CTkButton(editor, text="Remove Ingredient", height=42, command=remove_selected).grid(row=9, column=0, sticky="ew", padx=14, pady=(0, 8))
         ctk.CTkButton(editor, text="Save Changes", height=42, command=save_changes).grid(row=10, column=0, sticky="ew", padx=14, pady=(0, 8))
-        ctk.CTkButton(editor, text="Clear Fields", height=42, command=clear_editor).grid(row=11, column=0, sticky="ew", padx=14, pady=(0, 8))
+        ctk.CTkButton(editor, text="Delete Meal", height=42, command=delete_current_meal).grid(row=11, column=0, sticky="ew", padx=14, pady=(0, 8))
         ctk.CTkButton(editor, text="Back", height=42, command=previous_command or self.show_menu).grid(row=12, column=0, sticky="ew", padx=14, pady=(0, 14))
 
         table.bind("<<TreeviewSelect>>", select_ingredient)
@@ -415,50 +433,99 @@ class KitchenMealTrackerApp(ctk.CTk):
 
     def generate_meal_plan(self):
         try:
+            meal_plan = load_weekly_plan()
+
+            if not meal_plan:
+                meals = load_meals()
+                meal_plan = build_meal_plan(meals)
+                save_weekly_plan(meal_plan)
+
+            self.show_meal_plan(meal_plan)
+
+        except Exception as error:
+            messagebox.showerror("Error", str(error))
+            self.set_status("Failed to load meal plan.")
+
+    def regenerate_meal_plan(self):
+        try:
+            confirm = messagebox.askyesno(
+                "Regenerate Meal Plan",
+                "Generate a new weekly meal plan? This will replace the current plan."
+            )
+
+            if not confirm:
+                return
+
             meals = load_meals()
             meal_plan = build_meal_plan(meals)
             save_weekly_plan(meal_plan)
-            meal_types, rows = self.format_meal_plan_by_day(meal_plan)
-            lookup = {(meal["day"], meal["meal_type"]): (meal["meal_id"], meal["meal_name"]) for meal in meal_plan}
-            columns = tuple(["day"] + meal_types)
-            headings = tuple(["Day"] + meal_types)
-            widths = tuple([130] + [220 for _ in meal_types])
-            anchors = tuple(["w"] + ["w" for _ in meal_types])
+            self.show_meal_plan(meal_plan)
 
-            def meal_from_cell(values, column_id):
-                if not column_id.startswith("#"):
-                    return None
-                column_index = int(column_id.replace("#", "")) - 1
-                if column_index <= 0 or column_index > len(meal_types):
-                    return None
-                return lookup.get((values[0], meal_types[column_index - 1]))
-
-            self.show_table_page(
-                title="Meal Plan",
-                columns=columns,
-                headings=headings,
-                widths=widths,
-                anchors=anchors,
-                rows=rows,
-                values_for_row=lambda day_plan: tuple([day_plan["day"]] + [day_plan.get(meal_type, "") for meal_type in meal_types]),
-                status_text=f"Generated meal plan for {len(rows)} day(s). Click a meal to view ingredients.",
-                show_vertical=False,
-                show_horizontal=True,
-                on_cell_open=lambda values, column_id: self.show_meal_ingredients(*meal_from_cell(values, column_id), self.generate_meal_plan) if meal_from_cell(values, column_id) else None,
-                hover_text_for_cell=lambda values, column_id: f"Click to view ingredients for {meal_from_cell(values, column_id)[1]}." if meal_from_cell(values, column_id) else None,
-            )
         except Exception as error:
             messagebox.showerror("Error", str(error))
-            self.set_status("Failed to generate meal plan.")
+            self.set_status("Failed to regenerate meal plan.")
+
+    def show_meal_plan(self, meal_plan):
+        meal_types, rows = self.format_meal_plan_by_day(meal_plan)
+        lookup = {
+            (meal["day"], meal["meal_type"]): (meal["meal_id"], meal["meal_name"])
+            for meal in meal_plan
+        }
+        columns = tuple(["day"] + meal_types)
+        headings = tuple(["Day"] + meal_types)
+        widths = tuple([130] + [220 for _ in meal_types])
+        anchors = tuple(["w"] + ["w" for _ in meal_types])
+
+        def meal_from_cell(values, column_id):
+            if not column_id.startswith("#"):
+                return None
+            column_index = int(column_id.replace("#", "")) - 1
+            if column_index <= 0 or column_index > len(meal_types):
+                return None
+            return lookup.get((values[0], meal_types[column_index - 1]))
+
+        self.show_table_page(
+            title="Meal Plan",
+            columns=columns,
+            headings=headings,
+            widths=widths,
+            anchors=anchors,
+            rows=rows,
+            values_for_row=lambda day_plan: tuple(
+                [day_plan["day"]] + [day_plan.get(meal_type, "") for meal_type in meal_types]
+            ),
+            status_text=f"Loaded meal plan for {len(rows)} day(s). Click a meal to view ingredients.",
+            show_vertical=False,
+            show_horizontal=True,
+            on_cell_open=lambda values, column_id: self.show_meal_ingredients(
+                *meal_from_cell(values, column_id),
+                self.generate_meal_plan
+            ) if meal_from_cell(values, column_id) else None,
+            hover_text_for_cell=lambda values, column_id: (
+                f"Click to view ingredients for {meal_from_cell(values, column_id)[1]}."
+                if meal_from_cell(values, column_id)
+                else None
+            ),
+            close_text="Back",
+            close_command=self.show_menu,
+            extra_buttons=[("Regenerate", self.regenerate_meal_plan)],
+        )
 
     def generate_shopping_list(self):
         try:
-            inventory = load_inventory()
-            meals = load_meals()
             meal_ingredients = load_meal_ingredients()
             weekly_plan = load_weekly_plan()
-            shopping_list = build_shopping_list(inventory, meals, meal_ingredients, weekly_plan)
+            shopping_list = build_shopping_list(meal_ingredients, weekly_plan)
             save_shopping_list(shopping_list)
+
+            def email_list():
+                try:
+                    send_shopping_list_email(shopping_list)
+                    self.set_status("Shopping list emailed.")
+                except Exception as error:
+                    messagebox.showerror("Email Error", str(error))
+                    self.set_status("Failed to email shopping list.")
+
             self.show_table_page(
                 title="Shopping List",
                 columns=("ingredient", "quantity", "unit"),
@@ -470,18 +537,14 @@ class KitchenMealTrackerApp(ctk.CTk):
                 status_text=f"Generated {len(shopping_list)} shopping list item(s).",
                 show_vertical=True,
                 show_horizontal=False,
+                close_text="Back",
+                close_command=self.show_menu,
+                extra_buttons=[("Email List", email_list)],
             )
         except Exception as error:
             messagebox.showerror("Error", str(error))
             self.set_status("Failed to generate shopping list.")
 
-
 if __name__ == "__main__":
     app = KitchenMealTrackerApp()
     app.mainloop()
-
-
-
-
-
-
